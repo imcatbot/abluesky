@@ -18,6 +18,7 @@ pushd build
 
 lb config --apt-recommends false --bootappend-live "locales=zh_CN.GBK" \
     --cache-indices true --linux-flavours ${LINUX_FLAVOURS} \
+    --archive-areas "main contrib non-free"
     --memtest none --force true
 
 if [ ${WINDOW_MANAGE} == 'openbox' ]
