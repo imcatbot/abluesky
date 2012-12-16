@@ -46,8 +46,15 @@ umount $BUILD_DIR/mnt
 # Re-package filesystem
 mksquashfs $BUILD_DIR/chroot $BUILD_DIR/newcd/live/filesystem.squashfs
 
+# Copy 3rdparty
+cp -a 3rdparty/isolinux $BUILD_DIR/newcd/
+
 # Build iso
 
+genisoimage -l -o abluesky.iso  \
+-b isolinux/isolinux.bin -c isolinux/boot.cat \
+-no-emul-boot -boot-load-size 4 -boot-info-table \
+build/newcd/
 
 if [ "${CLEAN_FLAG}" = "True" ]
 then
