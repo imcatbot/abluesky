@@ -19,7 +19,10 @@ openbox
 conky
 
 #任务栏
-lxpanel
+fbpanel
+
+# ROX
+rox-filer
 
 #feh用来设置桌面壁纸
 feh
@@ -36,12 +39,14 @@ wicd-gtk
 
 #简单的终端软件
 xterm
+rxvt-unicode
 
 #没有sudo的系统怎么可以呢
 sudo
 
 #fcitx中文输入法
 fcitx
+fcitx-sunpinyin
 
 #一些常用的图标
 hicolor-icon-theme
