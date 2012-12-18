@@ -5,7 +5,7 @@
 
 
 CURRENT_DIR=`pwd`
-BUILD_DIR=build
+BUILD_DIR=${CURRENT_DIR}/build
 
 GFXBOOT_FONT=/home/catbot/develop/abluesky/gfxboot/gfxboot-font
 FONT_PATH=/usr/share/fonts/xpfonts
@@ -32,7 +32,7 @@ cp -a 3rdparty/isolinux $BUILD_DIR/newcd/
 
 # Create gfxboot message
 cp -a 3rdparty/gfxboot-message/ $BUILD_DIR/
-(cd $BUILD_DIR/gfxboot-message && cat addon.txt anscii.txt translations.zh_CN zh_CN.hlp > chs.txt)
+(cd $BUILD_DIR/gfxboot-message && cat addon.txt anscii.txt translations.zh_CN zh_CN.hlp zh_CN.tr > chs.txt)
 (cd $BUILD_DIR/gfxboot-message && ${GFXBOOT_FONT} -v -t chs.txt -p ${FONT_PATH} -f ${FONT_NAME} 16x16.fnt >16x16.fnt.log)
 (cd $BUILD_DIR/gfxboot-message && find .|cpio -o > $BUILD_DIR/newcd/isolinux/message)
 
