@@ -1,0 +1,109 @@
+% bool values
+/true     0 0 eq def
+/false    0 0 ne def
+
+% type values
+/t_none          0 def
+/t_int           1 def
+/t_unsigned      2 def
+/t_bool          3 def
+/t_string        4 def
+/t_code          5 def
+/t_ret           6 def
+/t_prim          7 def
+/t_sec           8 def
+/t_dict_idx      9 def
+/t_array        10 def
+/t_end          11 def
+/t_ptr          12 def
+
+/.value { t_int settype } def
+/.undef 0 t_none settype def
+/.end 0 t_end settype def
+
+
+% Convert object to pointer.
+%
+% ( obj ) ==> ( ptr )
+%
+/cvp { t_ptr settype } def
+
+/cvs { t_string settype } def
+
+
+% Allocate and define a new color.
+%
+% ( palette ) ==> ( color )
+%
+/newcolor {
+  colorbits 8 le {
+    newcolor.count .undef eq { /newcolor.count 0 def } if
+    max_image_colors newcolor.count add
+    dup rot setpalette
+    /newcolor.count newcolor.count 1 add def
+  } if
+  def
+} def
+
+
+% ( size ) ==> ( string )
+/string {
+  1 add malloc cvs
+} def
+
+
+% ( obj_1 ... obj_n string_1 string_2 ) ==> ( )
+%
+/sprintf {
+  dup cvp length exch snprintf
+} def
+  
+
+% ( number ) ==> ( )
+%
+/number.print {
+  32 string
+  exch over
+  "%d" exch sprintf
+  dup show
+  free
+} def
+
+
+800 600 16 findmode setmode not { false .end } if
+% 640 480 8 findmode setmode not { false .end } if
+
+"16x16.fnt" findfile setfont
+"test.jpg" findfile
+
+setimage loadpalette
+
+/max_image_colors image.colors def
+
+/black 0x000000 newcolor
+/white 0xffffff newcolor
+/gray  0x808080 newcolor
+
+white settextmodecolor
+
+0 0 moveto 0 0 image.size image
+
+/y 200 def
+/w 100 def
+/h 50 def
+
+100 y moveto w h savescreen /s1 exch def
+
+black setcolor
+100 y moveto w h fillrect
+white setcolor "Text" show
+100 y moveto w h savescreen /s0 exch def
+
+10 settransparency
+0x00ff00 setcolor
+0 0 moveto s0 s1 blend2
+
+300 y moveto s1 restorescreen
+
+trace
+

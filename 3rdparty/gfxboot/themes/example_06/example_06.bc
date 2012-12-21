@@ -1,0 +1,387 @@
+% example_06.bc
+%
+% Draws simple menu and lets you select an entry and an boot option edit line.
+%
+% To use this example to boot from a real CD-ROM, do:
+%
+%   # make -C themes/example_06
+%   # mkdir /tmp/foo
+%   # gfxboot -a themes/example_06/bootlogo --expand-archive /tmp/foo
+%   # cp /tmp/foo/* to_the_dir_on_your_ISO_where_isolinux.bin_is
+%
+%   and add a line 'ui gfxboot bootlogo' to isolinux.cfg.
+%
+% To use this example with grub, do:
+%   # make -C themes/example_06
+%   # cp themes/example_06/message /boot/message
+%
+%   and add a line like 'gfxmenu (hdX,Y)/boot/message' to menu.lst (replace
+%   X and Y with real values).
+%
+% Notes:
+%  - use 'Timeout' callback to display timeout countdown
+%
+%  - boot when the timeout is up
+%
+%  - pass kernel args correctly to grub
+%
+% Test with (from top level dir [/usr/share/gfxboot]) with
+% 'gfxtest -t example_06' (isolinux) or
+% 'gfxtest -t example_06 grub' (grub).
+%
+
+
+% - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+% Some constants we probably need.
+%
+/true 0 0 eq def
+/false 0 0 ne def
+
+% some key codes
+/keyEsc       0x0000001b def
+/keyEnter     0x0000000d def
+/keyUp        0x48000000 def
+/keyLeft      0x4b000000 def
+/keyRight     0x4d000000 def
+/keyDown      0x50000000 def
+
+% type values
+/t_none    0 def
+/t_string  4 def
+/t_end    11 def
+/t_ptr    12 def
+
+% undefined (nil) value
+/.undef 0 t_none settype def
+
+% end token, stops execution
+/.end 0 t_end settype def
+
+
+% - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+% Convert integer to pointer.
+%
+% ( int1 -- ptr1 )
+%
+/cvp { t_ptr settype } def
+
+
+% - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+% Convert object to string.
+%
+% ( obj ) ==> ( string )
+%
+/cvs { t_string settype } def
+
+
+% - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+% Allocate new string.
+%
+% ( size -- string )
+%
+/string {
+  1 add malloc cvs
+} def
+
+
+% - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+% Arguments like snprintf.
+%
+% ( obj_1 ... obj_n string_1 string_2 -- )
+%
+/sprintf {
+  dup cvp length exch snprintf
+} def
+
+
+% - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+% bootloader - boot loader type
+%
+% ( -- int1 )
+%
+% int1: boot loader type (0: lilo, 1:syslinux/isolinux, 2: grub)
+%
+/bootloader sysconfig getbyte def
+
+/lilo     bootloader 0 eq def
+/syslinux bootloader 1 eq def
+/grub     bootloader 2 eq def
+
+
+% - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+% findmode - find video mode number
+%
+% ( int1 int2 int3 -- int4 )   
+%
+% int1, int2: width, height
+% int3: color bits
+% int4: mode number (or .undef)
+%
+% example
+%   1024 768 16 findmode setmode        % 1024x768, 16-bit color mode
+%
+/findmode {
+  0 1 videomodes {
+    videomodeinfo dup .undef eq {
+      pop pop pop pop
+    } {
+      % compare width, height, colors
+      6 index 4 index eq 6 index 4 index eq and 5 index 3 index eq and {
+        7 1 roll 6 { pop } repeat 0xbfff and return
+      } {
+        pop pop pop pop
+      } ifelse
+    } ifelse
+  } for
+
+  pop pop pop .undef
+} def
+
+
+% - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+% Input event handling.
+%
+% ( key -- input_buffer menu_entry action )
+%
+% key
+%  bit 0-7      ascii
+%  bit 8-15     scan code
+%  bit 16-32    status bits (ctrl, shift...)
+%
+% action
+%    0:         ok, stay in input loop
+%    1:         switch to text mode (that is, continue with the non-gfxboot
+%               bootloader interface)
+%  >=2:         boot
+%
+% Notes:
+%  - key = 0 indicates the bootloader timeout is up.
+%  - input_buffer is the command line that you would have normally entered in the bootloader.
+%    note that for syslinux it must start with the menu label string but not for grub
+%  - menu_entry is the number of the menu entry you want to boot
+%
+/KeyEvent {
+  % pre-process keycode a bit
+  dup 0xff00 and 16 shl exch 0xff and dup 0xe0 eq { pop 0 } if add
+  dup 0xff and { 0xff and } if
+  /key exch def
+
+  % 'key' now holds the ASCII code for 'normal' keys and the scan code in
+  % the upper 8 bits if there is no ASCII code (e.g. F-keys, cursor keys)
+
+  % process key events...
+  key keyDown eq {
+    menu.entry menu.texts length 1 sub lt {
+      menu.entry menu.deselect
+      /menu.entry menu.entry 1 add def
+      menu.entry menu.select
+    } if
+  } if
+
+  key keyUp eq {
+    menu.entry 0 gt {
+      menu.entry menu.deselect
+      /menu.entry menu.entry 1 sub def
+      menu.entry menu.select
+    } if
+  } if
+
+  % enter or timeout
+  key keyEnter eq key 0 eq or {
+    % construct command line: [label] + append_args + user_args
+    grub {
+      % grub expects just '<args>'
+      cmdline
+      menu.args menu.entry get
+      "%s %s" cmdtmp sprintf
+    } {
+      % syslinux expects '<label> <args>'
+      cmdline
+      menu.args menu.entry get
+      menu.texts menu.entry get
+      "%s %s %s" cmdtmp sprintf
+    } ifelse
+    cmdtmp menu.entry 2 return
+  } if
+
+  % maybe it's a printable char...
+  % remember to set the correct color (and font if necessary)
+  input_color setcolor
+  edit_obj key edit.input
+
+ "" 0 0
+} def
+
+
+% - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+% Setup boot menu.
+%
+% ( menu_entries_array cmdline_args_array defaultentry -- )
+%
+% This function is called before the first key event and gets passed the
+% bootloader config data.
+%
+/MenuInit {
+  % this is a string
+  /menu.default_entry exch def
+
+  % both are arrays
+  /menu.args exch def
+  /menu.texts exch def
+
+  % find index of the default entry
+  /menu.entry 0 def
+  0 1 menu.texts length 1 sub {
+    menu.texts over get
+    menu.default_entry eq { /menu.entry exch def exit } if
+    pop
+  } for
+
+  % menu position
+  /menu.x 300 def
+  /menu.y 100 def
+
+  % 1.5 * font size
+  /menu.dy fontheight dup 2 div add def
+
+  menu_color setcolor
+
+  % draw menu
+  menu.x menu.y moveto
+  menu.texts {
+    % add black shadow
+    shadow_show
+    currentpoint exch pop menu.dy add menu.x exch moveto
+  } forall
+
+  % mark default entry
+  menu.entry menu.select
+
+  % draw boot option field
+  label_color setcolor
+  10 500 moveto "Boot:" shadow_show
+
+  input_color setcolor
+
+  % intialize edit object; you can set the edit buffer to some initial value
+  edit_obj "vga=0x317" edit.init
+} def
+
+
+% - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+% Like 'show', but with black shadow.
+%
+% ( string -- )
+%
+/shadow_show {
+  currentcolor currentpoint
+  1 1 rmoveto
+  0 setcolor
+  3 index show
+  moveto setcolor
+  show
+} def
+
+
+% - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+% Show selected item.
+%
+% ( index -- )
+%
+/menu.select {
+  menu.dy mul menu.y add
+  menu.x exch moveto
+  ">" dup strsize pop neg 10 sub 0 rmoveto
+  arrow_color setcolor
+  show
+} def
+
+
+% - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+% Show deselected item.
+%
+% ( index -- )
+%
+/menu.deselect {
+  menu.dy mul menu.y add
+  menu.x exch moveto
+  ">" dup strsize pop neg 10 sub 0 rmoveto
+  currentpoint rot strsize image
+} def
+
+
+% - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+% Boot timeout counter.
+%
+% ( timeout time -- )
+%
+% timeout: total time in 18.2Hz steps, time: current value.
+%
+% Note: if the user hits a key to stop the timeout this function is called
+% with time = 0.
+%
+/Timeout {
+  /timeout.s.last timeout.s def
+  /timeout.s exch 10 mul 150 add 182 div def
+
+  pop	% we don't need it
+
+  timeout.s timeout.s.last ne {
+    % clear old value
+    720 20 moveto currentpoint fontheight 5 mul fontheight image
+    timeout.s 0 ne {
+      timeout.s "%us" time_str sprintf
+      timeout_color setcolor
+      time_str shadow_show
+    } if
+  } if
+} def
+
+
+% - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+% set 800x600 graphics mode
+% try 32 bit first; if no mode can be found, exit and continue without gfxboot
+%
+800 600 32 findmode setmode not {
+  800 600 16 findmode setmode not {
+    false .end
+  } if
+} if
+
+% load and set font
+"font.fnt" findfile setfont
+
+% load and set background image
+"clouds.jpg" findfile setimage
+0 0 moveto
+0 0 image.size image
+
+% input command line
+/cmdline 1024 string def
+
+% used in KeyEvent
+/cmdtmp 1024 string def
+
+% to display timeout
+/time_str 10 string def
+
+% our input line
+/edit_obj [
+  110			% x
+  500			% y
+  moveto currentpoint 600 fontheight savescreen		% background image, defines input field size
+  cmdline		% input buffer
+  dup cvp length 1 sub	% buffer size
+  .undef		% for internal use
+] def
+
+% our colors
+/input_color   0x000000 def
+/menu_color    0xe0e000 def
+/arrow_color   0xffffff def
+/label_color   0x00a000 def
+/timeout_color 0xf0f0f0 def
+
+% say we're fine ('false' tells bootloader not to use gfxboot)
+true
+

@@ -1,0 +1,108 @@
+% example_01.bc
+%
+% Very minimalistic demo. Writes a short message in text mode and lets you
+% boot linux or start from local disk.
+%
+% Notes:
+%
+%  General work flow:
+%    - this code is run during initialization and must leave either 'true'
+%      or 'false' on the top of stack (TOS)
+%
+%    - it must define (at least) a callback function 'KeyEvent' that is
+%      called later from the bootloader whenever a key is pressed
+%
+%    - 'KeyEvent' returns a status code telling the bootloader how to
+%      proceed (e.g. boot or wait for more input)
+%
+% Test with (from top level dir [/usr/share/gfxboot]) 'gfxtest -t example_01'.
+%
+
+
+% - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+% Some constants we probably need.
+%
+/true 0 0 eq def
+/false 0 0 ne def
+
+% pointer type
+/t_ptr 12 def
+
+
+% - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+% Convert integer to pointer.
+%
+% ( int1 -- ptr1 )
+%
+/cvp { t_ptr settype } def
+
+
+% - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+% Clear VGA text screen.
+%
+% ( -- )
+%
+/clearscreen {
+  % text screen starts at 0xb8000, two bytes per char (value + attribute)
+  % typical size: 25 x 80
+  % write spaces + attribute 7 (= light gray on black)
+  0xb8000 2 0xb8000 160 25 mul add 1 sub {
+    cvp 0x0720 putword
+  } for
+} def
+
+
+% - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+% Write to VGA text screen.
+%
+% ( x y text -- )
+%
+/print {
+  exch 80 mul
+  rot add 2 mul 0xb8000 add cvp
+  exch { over exch putbyte 2 add } forall
+  pop
+} def
+
+
+% - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+% Input event handling.
+%
+% ( key -- input_buffer menu_entry action )
+%
+% key
+%  bit 0-7      ascii
+%  bit 8-15     scan code
+%  bit 16-32    status bits (ctrl, shift...)
+%
+% action
+%    0:         ok, stay in input loop
+%    1:         switch to text mode (that is, continue with the non-gfxboot bootloader interface)
+%  >=2:         boot
+%
+% Notes:
+%  - key = 0 indicates the bootloader timeout is up.
+%  - input_buffer is the command line that you would have normally entered in the bootloader.
+%    note that for syslinux it must start with the menu label string but not for grub
+%  - menu_entry is the number of the menu entry you want to boot
+%
+/KeyEvent {
+  /key exch def
+
+  % 'linux' & 'harddisk' are labels in our test bootloader config (created by 'gfxtest')
+  key 0xff and 'l' eq { "linux"    1 2 return } if
+  key 0xff and 'd' eq { "harddisk" 0 2 return } if
+
+ "" 0 0
+} def
+
+
+% clear screen
+clearscreen
+
+% write some message
+10 12 "Press 'l' to start linux or 'd' to boot from disk." print
+
+% say we're fine ('false' tells bootloader not to use gfxboot)
+true
+

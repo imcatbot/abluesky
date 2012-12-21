@@ -1,0 +1,312 @@
+% bool values
+/true     0 0 eq def
+/false    0 0 ne def
+
+% type values
+/t_none          0 def
+/t_int           1 def
+/t_unsigned      2 def
+/t_bool          3 def
+/t_string        4 def
+/t_code          5 def
+/t_ret           6 def
+/t_prim          7 def
+/t_sec           8 def
+/t_dict_idx      9 def
+/t_array        10 def
+/t_end          11 def
+/t_ptr          12 def
+
+/.value { t_int settype } def
+/.undef 0 t_none settype def
+/.end 0 t_end settype def
+
+% input object fields
+/.inp_x          0 def          % x pos
+/.inp_y          1 def          % y pos
+/.inp_back       2 def          % background pixmap
+/.inp_buf        3 def          % input buffer
+/.inp_buf_len    4 def          % input buffer length
+/.inp_int        5 def          % internal state array, see below
+% optional fields
+/.inp_hidden     6 def          % hidden buffer
+/.inp_label      7 def          % input field label
+/.inp_visible    8 def          % field is visible
+/.inp_show       9 def          % field should be visible
+
+/.inp_int_cur           0 def   % current edit char offset
+/.inp_int_cursor        1 def   % cursor pos (pixel)
+/.inp_int_shift         2 def   % input line shifted (pixel)
+/.inp_int_flags         3 def   % bit 0: cursor visible
+/.inp_int_saved_cursor  4 def   % saved cursor background
+
+/keyEsc       0x0000001b def
+/keyEnter     0x0000000d def
+/keyTab       0x00000009 def
+/keyShiftTab  0x0f000000 def
+/keyF1        0x3b000000 def
+/keyF2        0x3c000000 def
+/keyF3        0x3d000000 def
+/keyF4        0x3e000000 def
+/keyF5        0x3f000000 def
+/keyF6        0x40000000 def
+/keyF7        0x41000000 def
+/keyF8        0x42000000 def
+/keyF9        0x43000000 def
+
+% - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+% Convert object to pointer.
+%
+% ( obj ) ==> ( ptr )
+%
+/cvp { t_ptr settype } def
+
+
+% - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+% Convert object to string.
+%
+% ( obj ) ==> ( string )
+%
+/cvs { t_string settype } def
+
+
+% base num char
+
+% - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+% Convert object to number.
+%
+% ( obj ) ==> ( int )
+%
+/cvn {
+  dup gettype t_string eq {
+    1 % sign
+    exch dup 0 get '-' eq {
+      exch pop 1 add -1 exch
+    } if
+    10 % initial base
+    0 % value
+    rot
+    {
+      dup 'a' ge { 0x20 sub } if
+      dup 'X' eq { pop pop pop 16 0 '0' } if
+      '0' sub
+      dup 9 gt { 7 sub } if
+      dup 0 lt over 4 index ge or { pop exit } if
+      exch 2 index mul add
+    } forall
+    exch pop mul
+  } {
+    t_int settype
+  } ifelse
+} def
+
+
+% - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+% Arguments like snprintf.
+%
+% ( obj_1 ... obj_n string_1 string_2 ) ==> ( )
+%
+/sprintf {
+  dup cvp length exch snprintf
+} def
+
+
+% - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+% Allocate new string.
+%
+% ( size ) ==> ( string )
+/string {
+  1 add malloc cvs
+} def
+
+
+/findmode {
+  0 1 videomodes {
+    videomodeinfo dup .undef eq {
+      pop pop pop pop
+    } {
+      % compare width, height, colors
+      6 index 4 index eq 6 index 4 index eq and 5 index 3 index eq and {
+        7 1 roll 6 { pop } repeat 0xbfff and return
+      } {
+        pop pop pop pop
+      } ifelse
+    } ifelse
+  } for
+
+  pop pop pop .undef
+} def
+
+
+% - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+% Print string (for debugging).
+%
+% ( string ) ==> ( )
+%
+/string.print {
+  dup
+  currentpoint currentpoint 5 -1 roll strsize image moveto
+  show
+} def
+
+
+% - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+% Print number (for debugging).
+%
+% ( number ) ==> ( )
+%
+/number.print {
+  32 string
+  exch over
+  "%08x" exch sprintf
+  dup string.print
+  free
+} def
+
+
+% - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+% Print obj (for debugging).
+%
+% ( obj ) ==> ( )
+%
+/obj.print {
+  64 string
+  exch dup
+  .value exch gettype
+  "%x:%08x" 3 index sprintf
+  dup string.print
+  free
+} def
+
+
+% - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+% Print (for debugging).
+%
+% ( obj ) ==> ( )
+%
+/print {
+  dup gettype t_int eq { number.print return } if
+  dup gettype t_string eq { string.print return } if
+  obj.print
+} def
+
+
+% - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+% Keyboard mapping.
+%
+% ( key ) ==> ( key )
+%
+/mapkey {
+   dup 24 shr 0xff and /key.code exch def
+} def
+
+
+/KeyEvent {
+
+  dup 0xff00 and 16 shl over 0xff and dup 0xe0 eq { pop 0 } if add mapkey /key exch def
+
+  "" -1
+
+  key keyEsc eq { 1 return } if
+
+  key keyF1 eq {
+    edit edit.hidecursor
+    0 return
+  } if
+
+  key keyF2 eq {
+    edit edit.showcursor
+    0 return
+  } if
+
+  key keyF3 eq {
+    hide_it
+    0 return
+  } if
+
+  key keyF4 eq {
+    .undef show_it
+    0 return
+  } if
+
+  key keyF5 eq {
+    hide_it
+    /width width 10 sub def
+    .undef show_it
+    0 return
+  } if
+
+  edit key edit.input
+
+  0
+
+} def
+
+
+800 600 16 findmode setmode not { false .end } if
+
+"normal.fnt" findfile setfont
+
+"cat.jpg" findfile setimage
+
+/black 0x000000 def
+/white 0xffffff def
+/yellow 0xffff00 def
+/red 0xff0000 def
+
+white setcolor
+
+0 0 moveto 0 0 image.size image
+
+/buf 200 string def
+
+/x 100 def
+/y 300 def
+/width 600 def
+/height fontheight 2 add def
+
+/edit [
+  .undef .undef
+  .undef
+  buf
+  buf cvp length
+  .undef
+] def
+
+
+/show_it {
+
+  0x00ffff setcolor
+
+  edit .inp_x x put
+  edit .inp_y y put
+  edit .inp_back get free
+  edit .inp_back x y moveto width height savescreen put
+
+  x 1 sub y moveto x 1 sub y height add 1 sub lineto
+  x y 1 sub moveto x width add 1 sub y 1 sub lineto
+
+  x width add y moveto x width add y height add 1 sub lineto
+  x y height add moveto x width add 1 sub y height add lineto
+
+  white setcolor
+
+  dup {
+    edit exch edit.init
+  } {
+    pop
+    edit edit.redraw
+    edit edit.showcursor
+  } ifelse
+} def
+
+
+/hide_it {
+  edit edit.hidecursor
+  x 1 sub y 1 sub moveto
+  currentpoint width 2 add height 2 add image
+} def
+
+
+"" show_it
+
