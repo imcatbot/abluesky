@@ -4,7 +4,7 @@ CFLAGS	 = -g -Wall -Wno-pointer-sign -O2 -fomit-frame-pointer
 GIT2LOG := $(shell if [ -x ./git2log ] ; then echo ./git2log --update ; else echo true ; fi)
 GITDEPS := $(shell [ -d .git ] && echo .git/HEAD .git/refs/heads .git/refs/tags)
 
-VERSION := $(shell $(GIT2LOG) --version VERSION ; cat VERSION)
+VERSION := Jiangwei-customized
 
 # THEMES	 = $(wildcard themes/*)
 THEMES	 = themes/upstream themes/openSUSE themes/SLES themes/SLED themes/KDE
