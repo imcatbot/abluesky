@@ -7,8 +7,8 @@
 CURRENT_DIR=`pwd`
 BUILD_DIR=${CURRENT_DIR}/build
 
-GFXBOOT_FONT=/home/catbot/develop/abluesky/gfxboot/gfxboot-font
-FONT_PATH=/usr/share/fonts/xpfonts
+GFXBOOT_FONT_BIN=${BUILD_DIR}/gfxboot/gfxboot-font
+FONT_PATH=${CURRENT_DIR}/3rdparty/fonts/
 FONT_NAME=simhei
 
 # Create build directory 
@@ -30,10 +30,20 @@ rm -rf $BUILD_DIR/newchroot
 # Copy 3rdparty
 cp -a 3rdparty/isolinux $BUILD_DIR/newcd/
 
+# Compile gfxboot binary if it is not yet
+SYS_GFXBOOT_FONT_BIN=`which gfxboot-font`
+if [ ${SYS_GFXBOOT_FONT_BIN} = "" ]
+then
+    cp -a 3rdparty/gfxboot ${BUILD_DIR}/
+    (cd ${BUILD_DIR}/gfxboot && make )
+else
+    GFXBOOT_FONT_BIN=${SYS_GFXBOOT_FONT_BIN}
+fi
+
 # Create gfxboot message
 cp -a 3rdparty/gfxboot-message/ $BUILD_DIR/
 (cd $BUILD_DIR/gfxboot-message && cat addon.txt anscii.txt translations.zh_CN zh_CN.hlp zh_CN.tr > chs.txt)
-(cd $BUILD_DIR/gfxboot-message && ${GFXBOOT_FONT} -v -t chs.txt -p ${FONT_PATH} -f ${FONT_NAME} 16x16.fnt >16x16.fnt.log)
+(cd $BUILD_DIR/gfxboot-message && ${GFXBOOT_FONT_BIN} -v -t chs.txt -p ${FONT_PATH} -f ${FONT_NAME} 16x16.fnt >16x16.fnt.log)
 (cd $BUILD_DIR/gfxboot-message && find .|cpio -o > $BUILD_DIR/newcd/isolinux/message)
 
 # Clean gfxboot message
