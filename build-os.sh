@@ -21,6 +21,7 @@ mkdir -p $BUILD_DIR/tmp
 (cd $BUILD_DIR/chroot && tar -cf - --exclude=var/cache/apt/archives/* --exclude=usr/share/doc/* . )| tar -x -C $BUILD_DIR/newchroot
 
 # Set backgroud image
+mkdir -p ${BUILD_DIR}/newchroot/usr/share/wallpagers/
 cp ${CURRENT_DIR}/images/default-bg.jpg ${BUILD_DIR}/newchroot/usr/share/wallpagers/default-bg.jpg
 
 
@@ -28,10 +29,10 @@ cp ${CURRENT_DIR}/images/default-bg.jpg ${BUILD_DIR}/newchroot/usr/share/wallpag
 mkdir -p ${BUILD_DIR}/etc/skel/.config
 
 # Customize openbox
-cp -a ${CURRENT_DIR}/skel_config/openbox/ ${BUILD_DIR}/etc/skel/.config/
+cp -a ${CURRENT_DIR}/skel_config/openbox/ ${BUILD_DIR}/newchoot/etc/skel/.config/
 
 # Customize lxpanel
-cp -a ${CURRENT_DIR}/skel_config/lxpanel ${BUILD_DIR}/etc/skel/.config/
+cp -a ${CURRENT_DIR}/skel_config/lxpanel ${BUILD_DIR}/newchroot/etc/skel/.config/
 
 # Re-package filesystem
 mksquashfs $BUILD_DIR/newchroot $BUILD_DIR/newcd/live/filesystem.squashfs
