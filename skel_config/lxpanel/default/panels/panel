@@ -108,17 +108,21 @@ Plugin {
         tooltips=1
         IconsOnly=0
         ShowAllDesks=0
-        UseMouseWheel=1
+        UseMouseWheel=0
         UseUrgencyHint=1
         FlatButton=1
         MaxTaskWidth=150
         spacing=1
-        GroupedTasks=1
+        GroupedTasks=0
     }
 }
 
 Plugin {
     type = tray
+}
+
+Plugin {
+    type = volumealsa
 }
 
 Plugin {
