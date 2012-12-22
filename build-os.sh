@@ -22,7 +22,7 @@ mkdir -p $BUILD_DIR/tmp
 
 # Set backgroud image
 mkdir -p ${BUILD_DIR}/newchroot/usr/share/wallpagers/
-cp ${CURRENT_DIR}/images/default-bg.jpg ${BUILD_DIR}/newchroot/usr/share/wallpagers/default-bg.jpg
+cp ${CURRENT_DIR}/images/* ${BUILD_DIR}/newchroot/usr/share/wallpagers/
 
 
 # Create a customized skel
@@ -33,6 +33,9 @@ cp -a ${CURRENT_DIR}/skel_config/openbox/ ${BUILD_DIR}/newchroot/etc/skel/.confi
 
 # Customize lxpanel
 cp -a ${CURRENT_DIR}/skel_config/lxpanel ${BUILD_DIR}/newchroot/etc/skel/.config/
+
+# Copy ROX config
+cp -a ${CURRENT_DIR}/skel_config/rox.sourceforge.net ${BUILD_DIR}/newchroot/etc/skel/.config/
 
 # Re-package filesystem
 mksquashfs $BUILD_DIR/newchroot $BUILD_DIR/newcd/live/filesystem.squashfs
