@@ -10,7 +10,7 @@ Global {
     height=26
     transparent=1
     tintcolor=#26551e
-    alpha=226
+    alpha=120
     autohide=0
     heightwhenhidden=2
     setdocktype=1
@@ -115,10 +115,6 @@ Plugin {
         spacing=1
         GroupedTasks=1
     }
-}
-
-Plugin {
-    type = cpu
 }
 
 Plugin {
