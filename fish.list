@@ -19,7 +19,7 @@ openbox
 conky
 
 #任务栏
-fbpanel
+lxpanel
 
 # ROX
 rox-filer
@@ -38,7 +38,6 @@ flashplugin-nonfree
 wicd-gtk
 
 #简单的终端软件
-xterm
 rxvt-unicode
 
 #没有sudo的系统怎么可以呢
@@ -56,9 +55,6 @@ alsa-base
 alsa-utils
 
 #尽可能多的网卡驱动
-firmware-b43-installer
-firmware-b43-lpphy-installer
-firmware-b43legacy-installer
 firmware-linux-free
 firmware-atheros
 firmware-bnx2
