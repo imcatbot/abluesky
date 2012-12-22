@@ -20,7 +20,18 @@ mkdir -p $BUILD_DIR/tmp
 # Copy filesystem to newchroot for building
 (cd $BUILD_DIR/chroot && tar -cf - --exclude=var/cache/apt/archives/* --exclude=usr/share/doc/* . )| tar -x -C $BUILD_DIR/newchroot
 
-# Clean up filesystem
+# Set backgroud image
+cp ${CURRENT_DIR}/images/default-bg.jpg ${BUILD_DIR}/newchroot/usr/share/wallpagers/default-bg.jpg
+
+
+# Create a customized skel
+mkdir -p ${BUILD_DIR}/etc/skel/.config
+
+# Customize openbox
+cp -a ${CURRENT_DIR}/skel_config/openbox/ ${BUILD_DIR}/etc/skel/.config/
+
+# Customize lxpanel
+cp -a ${CURRENT_DIR}/skel_config/lxpanel ${BUILD_DIR}/etc/skel/.config/
 
 # Re-package filesystem
 mksquashfs $BUILD_DIR/newchroot $BUILD_DIR/newcd/live/filesystem.squashfs

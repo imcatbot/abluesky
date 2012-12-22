@@ -1,8 +1,5 @@
 #!/bin/sh
 
-#启动输入法
-fcitx &
-
 #启动任务栏
 lxpanel &
 
