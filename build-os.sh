@@ -26,7 +26,7 @@ cp ${CURRENT_DIR}/images/default-bg.jpg ${BUILD_DIR}/newchroot/usr/share/wallpag
 
 
 # Create a customized skel
-mkdir -p ${BUILD_DIR}/etc/skel/.config
+mkdir -p ${BUILD_DIR}/newchroot/etc/skel/.config
 
 # Customize openbox
 cp -a ${CURRENT_DIR}/skel_config/openbox/ ${BUILD_DIR}/newchoot/etc/skel/.config/
