@@ -1,5 +1,8 @@
 #!/bin/sh
 
+# 调节键盘速度
+xset r rate 280 30
+
 #启动任务栏
 lxpanel &
 
@@ -11,3 +14,5 @@ lxpanel &
 
 #设置一张壁纸
 feh --bg-scale /usr/share/wallpagers/default-bg.jpg
+
+rox -S &
