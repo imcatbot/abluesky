@@ -9,8 +9,8 @@ Global {
     width=100
     height=26
     transparent=1
-    tintcolor=#000000
-    alpha=0
+    tintcolor=#26551e
+    alpha=226
     autohide=0
     heightwhenhidden=2
     setdocktype=1
@@ -56,6 +56,12 @@ Plugin {
     Config {
         Button {
             id=/usr/share/applications/gksu.desktop
+        }
+        Button {
+            id=/usr/share/applications/obconf.desktop
+        }
+        Button {
+            id=/usr/share/applications/iceweasel.desktop
         }
     }
 }
@@ -107,7 +113,7 @@ Plugin {
         FlatButton=1
         MaxTaskWidth=150
         spacing=1
-        GroupedTasks=0
+        GroupedTasks=1
     }
 }
 
