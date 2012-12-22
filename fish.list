@@ -54,6 +54,12 @@ hicolor-icon-theme
 alsa-base
 alsa-utils
 
+# 窗口阴影效果
+xcompmgr
+
+# 桌面图标
+idesk
+
 #尽可能多的网卡驱动
 firmware-linux-free
 firmware-atheros

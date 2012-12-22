@@ -1,7 +1,7 @@
 ! urxvt color set
 
 URxvt.depth:32
-URxvt.background:[75]#000000
+URxvt.background:[85]#000000
 URxvt.foreground:white
 URxvt.colorBD:yellow
 URxvt.colorUL:Green
