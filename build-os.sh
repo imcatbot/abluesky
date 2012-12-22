@@ -29,7 +29,7 @@ cp ${CURRENT_DIR}/images/default-bg.jpg ${BUILD_DIR}/newchroot/usr/share/wallpag
 mkdir -p ${BUILD_DIR}/newchroot/etc/skel/.config
 
 # Customize openbox
-cp -a ${CURRENT_DIR}/skel_config/openbox/ ${BUILD_DIR}/newchoot/etc/skel/.config/
+cp -a ${CURRENT_DIR}/skel_config/openbox/ ${BUILD_DIR}/newchroot/etc/skel/.config/
 
 # Customize lxpanel
 cp -a ${CURRENT_DIR}/skel_config/lxpanel ${BUILD_DIR}/newchroot/etc/skel/.config/
