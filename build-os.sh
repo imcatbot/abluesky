@@ -41,6 +41,22 @@ cp -a ${CURRENT_DIR}/skel_config/rox.sourceforge.net ${BUILD_DIR}/newchroot/etc/
 # Copy Xresource
 cp -a ${CURRENT_DIR}/skel_config/dotXresources ${BUILD_DIR}/newchroot/etc/skel/.Xresources
 
+
+# Clean uneeded packages
+PACKAGES=
+for line in `cat ${CURRENT_DIR}/packages.backlist`
+do
+    if echo "$line" | grep "^#" >/dev/null 2>&1
+    then
+	continue
+    fi
+    PACKAGES="$PACKAGES $line"
+done
+
+apt-get -y purge $PACKAGES
+apt-get -y autoremove
+
+
 # Re-package filesystem
 mksquashfs $BUILD_DIR/newchroot $BUILD_DIR/newcd/live/filesystem.squashfs
 
@@ -73,7 +89,7 @@ cp -a $BUILD_DIR/orig_cd/live/vmlinuz* $BUILD_DIR/newcd/live
 
 # Build iso
 
-genisoimage -l -o abluesky.iso  \
+genisoimage -l -o abluesky.iso  -R -J -hfs \
 -b isolinux/isolinux.bin -c isolinux/boot.cat \
 -no-emul-boot -boot-load-size 4 -boot-info-table \
 build/newcd/

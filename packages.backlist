@@ -1,0 +1,15 @@
+xterm
+exim4*
+info
+man-db
+manpages
+gnome-keyring
+cpp-4.7
+doc-debian
+mutt
+procmail
+aptitude
+ca-certificates
+groff-base
+iptables
+libg11-mesa-dri
