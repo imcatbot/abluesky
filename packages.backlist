@@ -12,4 +12,4 @@ aptitude
 ca-certificates
 groff-base
 iptables
-libg11-mesa-dri
+libgl1-mesa-dri
